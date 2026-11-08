@@ -41,8 +41,9 @@ class BedrockLLM:
             "bedrock-runtime",
             region_name=region,
             config=Config(
+                connect_timeout=5,  # an unreachable endpoint fails in seconds, not minutes
                 read_timeout=timeout,
-                retries={"max_attempts": 5, "mode": "adaptive"},  # handles throttling
+                retries={"max_attempts": 3, "mode": "adaptive"},  # adaptive also backs off on throttling
             ),
         )
 

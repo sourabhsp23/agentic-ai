@@ -7,6 +7,7 @@ from collections.abc import Iterator
 from typing import Any
 
 from app.core.container import Container
+from app.core.errors import describe_error
 from app.db.models import AgentRun
 from app.llm.base import estimate_cost
 from app.observability.metrics import AGENT_RUNS
@@ -78,11 +79,8 @@ class AgentService:
                         yield {"type": "step", **ev}
         except Exception as exc:  # surface any unexpected failure to the client
             log.exception("Agent run %s crashed", run_id)
-            state |= {
-                "status": "failed",
-                "error": str(exc),
-                "final_answer": "Something went wrong while running the agents.",
-            }
+            message = describe_error(exc)
+            state |= {"status": "failed", "error": message, "final_answer": message}
 
         summary = _summarise(run_id, state, (time.perf_counter() - start) * 1000)
         AGENT_RUNS.labels(summary["status"]).inc()

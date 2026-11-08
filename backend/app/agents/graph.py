@@ -78,7 +78,12 @@ def build_graph(deps: AgentDeps):
     @traced("retrieve_context")
     def retrieve_context(state: AgentState) -> dict:
         schema = engine.schema_prompt(state["dataset"])
-        chunks = deps.store.search(state["question"], settings.rag_top_k)
+        try:
+            chunks = deps.store.search(state["question"], settings.rag_top_k)
+        except Exception:
+            # Business context improves answers but isn't required: continue without it.
+            log.warning("Knowledge search failed; continuing without business context", exc_info=True)
+            return {"schema": schema, "context": [], "_summary": "Loaded schema; knowledge base unavailable"}
         context = [{"source": c.source, "content": c.content, "score": round(c.score, 3)} for c in chunks]
         sources = ", ".join(sorted({c["source"] for c in context})) or "none"
         return {"schema": schema, "context": context, "_summary": f"Loaded schema; context from {sources}"}

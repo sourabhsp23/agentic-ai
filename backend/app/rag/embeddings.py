@@ -18,10 +18,15 @@ class Embedder(Protocol):
 class BedrockEmbedder:
     def __init__(self, model_id: str, region: str, dim: int) -> None:
         import boto3
+        from botocore.config import Config
 
         self.model_id = model_id
         self.dim = dim
-        self._client = boto3.client("bedrock-runtime", region_name=region)
+        self._client = boto3.client(
+            "bedrock-runtime",
+            region_name=region,
+            config=Config(connect_timeout=5, read_timeout=20, retries={"max_attempts": 2}),
+        )
 
     def embed(self, text: str) -> list[float]:
         body = json.dumps({"inputText": text[:8000], "dimensions": self.dim, "normalize": True})

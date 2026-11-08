@@ -89,7 +89,8 @@ jobs:
 
       # Report-only for now. Lesson: switch exit-code to "1" to block releases on CRITICAL vulnerabilities.
       - name: Scan API image (Trivy)
-        uses: aquasecurity/trivy-action@0.28.0
+        # Pinned to a commit SHA: tags can be moved or deleted, a SHA cannot (supply-chain safety).
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: insightpilot-api:ci
           severity: CRITICAL,HIGH

@@ -1,0 +1,4 @@
+# Keep LF everywhere so files behave the same in Linux containers and CI.
+* text=auto eol=lf
+*.png binary
+*.woff2 binary

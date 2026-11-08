@@ -1,0 +1,35 @@
+product_id,product_name,category,unit_price,unit_cost
+1,Wireless Earbuds,Electronics,59,32.93
+2,Smartwatch,Electronics,199,147.76
+3,4K Monitor,Electronics,329,219.6
+4,Mechanical Keyboard,Electronics,89,60.79
+5,USB-C Hub,Electronics,39,20.63
+6,Noise Cancelling Headphones,Electronics,249,136.2
+7,Portable SSD 1TB,Electronics,119,57.4
+8,Webcam HD,Electronics,69,49.95
+9,Espresso Machine,Home & Kitchen,279,173.94
+10,Air Fryer,Home & Kitchen,129,95.6
+11,Chef Knife,Home & Kitchen,79,54.07
+12,Smart Bulb Pack,Home & Kitchen,49,29.32
+13,Robot Vacuum,Home & Kitchen,349,258.97
+14,Blender,Home & Kitchen,99,68.34
+15,Running Shoes,Fashion,119,66.05
+16,Denim Jacket,Fashion,89,52.2
+17,Leather Wallet,Fashion,45,30.77
+18,Sunglasses,Fashion,129,73.95
+19,Backpack,Fashion,75,38.04
+20,Wool Sweater,Fashion,95,71.06
+21,Yoga Mat,Sports & Outdoors,35,17.79
+22,Camping Tent,Sports & Outdoors,189,102.17
+23,Dumbbell Set,Sports & Outdoors,149,96.54
+24,Cycling Helmet,Sports & Outdoors,65,45.72
+25,Water Bottle,Sports & Outdoors,25,11.57
+26,Designing Data-Intensive Applications,Books,45,29.21
+27,Clean Code,Books,38,27.44
+28,The Pragmatic Programmer,Books,42,30.28
+29,AI Engineering,Books,55,27.27
+30,Atomic Habits,Books,22,12.52
+31,Skincare Set,Beauty,65,33.01
+32,Hair Dryer,Beauty,89,47.27
+33,Perfume,Beauty,110,64.8
+34,Electric Toothbrush,Beauty,79,36.19

@@ -1,0 +1,25 @@
+[project]
+name = "insightpilot"
+version = "1.0.0"
+description = "Autonomous multi-agent data analyst on Amazon Bedrock"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S", "SIM"]
+ignore = [
+    "B008",  # FastAPI Depends() in defaults is idiomatic
+    "S608",  # SQL built from LLM output is validated by sql_guard + sandboxed DuckDB
+    "S324",  # md5 used for feature hashing, not security
+    "S311",  # random used for sample data
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

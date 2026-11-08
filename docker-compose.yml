@@ -1,0 +1,49 @@
+# Full local stack:  docker compose up --build   ->  http://localhost:8080
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: insightpilot
+      POSTGRES_PASSWORD: insightpilot
+      POSTGRES_DB: insightpilot
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U insightpilot"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      args:
+        GIT_SHA: ${GIT_SHA:-local}
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+psycopg://insightpilot:insightpilot@db:5432/insightpilot
+      APP_ENV: dev
+      LOG_JSON: "false"
+    volumes:
+      # Lets boto3 use your local AWS profile for Bedrock. Never bake keys into images.
+      - ${HOME:-.}/.aws:/app/.aws:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  web:
+    build: ./frontend
+    environment:
+      API_UPSTREAM: http://api:8000
+    depends_on:
+      - api
+    ports:
+      - "8080:80"
+
+volumes:
+  pgdata:

@@ -1,0 +1,99 @@
+/*
+ * Design tokens. Direction: dense, utilitarian analyst console.
+ * Cool slate neutrals carry the UI; one deep-teal accent for primary action, focus, selection.
+ * Colors are RGB triplets so Tailwind can apply alpha: rgb(var(--fg) / 0.6).
+ */
+:root {
+  /* Neutral scale (cool slate, 11 steps) */
+  --n-0: 251 252 252;
+  --n-50: 245 247 248;
+  --n-100: 236 239 241;
+  --n-200: 221 226 229;
+  --n-300: 198 205 210;
+  --n-400: 154 164 171;
+  --n-500: 107 117 126;
+  --n-600: 82 92 101;
+  --n-700: 61 69 76;
+  --n-800: 39 45 50;
+  --n-900: 23 27 31;
+
+  /* Semantic surfaces */
+  --bg: var(--n-0);
+  --bg-subtle: var(--n-50);
+  --bg-muted: var(--n-100);
+  --border: var(--n-200);
+  --border-strong: var(--n-300);
+  --fg: var(--n-900);
+  --fg-muted: var(--n-600);
+  --fg-subtle: var(--n-500);
+
+  /* Single accent: deep teal */
+  --accent: 15 118 110;
+  --accent-hover: 17 94 89;
+  --accent-fg: 251 252 252;
+  --accent-subtle: 225 242 240;
+
+  /* Semantic states */
+  --success: 21 128 61;
+  --success-subtle: 228 244 234;
+  --warning: 161 98 7;
+  --warning-subtle: 252 243 224;
+  --danger: 185 28 28;
+  --danger-subtle: 252 232 232;
+  --info: 3 105 161;
+  --info-subtle: 227 240 249;
+
+  /* Chart series (accent first, then neutrals) */
+  --chart-1: var(--accent);
+  --chart-2: var(--n-500);
+  --chart-3: var(--n-300);
+  --chart-4: var(--n-700);
+
+  --shadow-1: 0 1px 2px rgb(var(--n-900) / 0.06);
+  --shadow-2: 0 4px 16px rgb(var(--n-900) / 0.12);
+
+  --duration: 160ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: 18 21 24;
+  --bg-subtle: 23 27 31;
+  --bg-muted: 31 36 41;
+  --border: 44 51 57;
+  --border-strong: 61 69 76;
+  --fg: 229 233 236;
+  --fg-muted: 160 170 178;
+  --fg-subtle: 128 138 147;
+
+  --accent: 45 179 163;
+  --accent-hover: 78 199 184;
+  --accent-fg: 9 30 28;
+  --accent-subtle: 20 48 46;
+
+  --success: 74 196 120;
+  --success-subtle: 21 44 31;
+  --warning: 226 167 72;
+  --warning-subtle: 48 38 20;
+  --danger: 240 113 113;
+  --danger-subtle: 52 26 28;
+  --info: 96 175 225;
+  --info-subtle: 21 39 54;
+
+  --chart-2: 128 138 147;
+  --chart-3: 82 92 101;
+  --chart-4: 198 205 210;
+
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-2: 0 4px 16px rgb(0 0 0 / 0.45);
+
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration: 0ms;
+  }
+}

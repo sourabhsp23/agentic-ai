@@ -1,0 +1,51 @@
+# Production compose file for a single EC2 host. Images come from ECR (built by CI),
+# nothing is built on the server. Values come from /opt/insightpilot/.env (written by user_data).
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: insightpilot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: insightpilot
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U insightpilot"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    logging: &logging
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  api:
+    image: ${API_IMAGE}:${TAG}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://insightpilot:${POSTGRES_PASSWORD}@db:5432/insightpilot
+      LLM_PROVIDER: bedrock
+      EMBEDDING_PROVIDER: bedrock
+      AWS_REGION: ${AWS_REGION}
+      BEDROCK_MODEL_ID: ${BEDROCK_MODEL_ID}
+      STORAGE_BACKEND: s3
+      S3_BUCKET: ${S3_BUCKET}
+      # No AWS keys: boto3 gets temporary credentials from the instance profile via IMDSv2.
+    depends_on:
+      db:
+        condition: service_healthy
+    logging: *logging
+
+  web:
+    image: ${WEB_IMAGE}:${TAG}
+    restart: unless-stopped
+    environment:
+      API_UPSTREAM: http://api:8000
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    logging: *logging
+
+volumes:
+  pgdata:

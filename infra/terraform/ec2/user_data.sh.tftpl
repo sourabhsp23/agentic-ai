@@ -1,0 +1,63 @@
+#!/bin/bash
+# Runs once at first boot (cloud-init). Installs Docker, writes the app config and starts it.
+# Rendered by Terraform templatefile(): a doubled dollar before a brace is a literal shell
+# expansion, a single one is a Terraform variable.
+set -euxo pipefail
+
+# --- 2 GB swap: lets a small (1 GB) instance run Postgres + API + nginx comfortably
+if [ ! -f /swapfile ]; then
+  dd if=/dev/zero of=/swapfile bs=1M count=2048
+  chmod 600 /swapfile
+  mkswap /swapfile
+  swapon /swapfile
+  echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
+fi
+
+# --- Docker engine + compose plugin
+dnf install -y docker
+systemctl enable --now docker
+mkdir -p /usr/local/lib/docker/cli-plugins
+curl -sSL "https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-x86_64" \
+  -o /usr/local/lib/docker/cli-plugins/docker-compose
+chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+# --- App files
+mkdir -p /opt/insightpilot
+cd /opt/insightpilot
+
+cat > docker-compose.yml <<'COMPOSE'
+${compose_file}
+COMPOSE
+
+if [ ! -f .env ]; then
+  cat > .env <<ENV
+API_IMAGE=${api_image}
+WEB_IMAGE=${web_image}
+TAG=latest
+AWS_REGION=${region}
+BEDROCK_MODEL_ID=${bedrock_model_id}
+S3_BUCKET=${datasets_bucket}
+POSTGRES_PASSWORD=$(openssl rand -hex 16)
+ENV
+  chmod 600 .env
+fi
+
+# --- Deploy script: CI calls this through SSM Run Command with the new image tag
+cat > deploy.sh <<'DEPLOY'
+#!/bin/bash
+set -euo pipefail
+cd /opt/insightpilot
+TAG="$${1:-latest}"
+REGISTRY="$(grep '^API_IMAGE=' .env | cut -d= -f2 | cut -d/ -f1)"
+REGION="$(grep '^AWS_REGION=' .env | cut -d= -f2)"
+aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "$REGISTRY"
+sed -i "s/^TAG=.*/TAG=$TAG/" .env
+docker compose pull
+docker compose up -d --remove-orphans
+docker image prune -f
+echo "Deployed tag $TAG"
+DEPLOY
+chmod +x deploy.sh
+
+# First start. If CI hasn't pushed images yet this fails harmlessly; the next deploy fixes it.
+./deploy.sh latest || echo "Images not available yet; run the Release workflow, then deploy again."

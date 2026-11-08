@@ -1,0 +1,50 @@
+# Create:  eksctl create cluster -f infra/eks/cluster.yaml      (about 15 minutes)
+# Delete:  eksctl delete cluster -f infra/eks/cluster.yaml      (do this after every session)
+#
+# Cost while running: EKS control plane ~$0.10/h + 2 spot t3.medium nodes ~$0.03/h + load balancer.
+# Replace YOUR_ACCOUNT_ID below (find it with: aws sts get-caller-identity).
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: insightpilot
+  region: us-east-1
+  # No "version": eksctl picks the current default. Old versions move to paid extended support.
+
+iam:
+  withOIDC: true
+  # Pod Identity: pods using this service account get the app's IAM permissions (Bedrock + S3).
+  podIdentityAssociations:
+    - namespace: insightpilot
+      serviceAccountName: insightpilot-api
+      permissionPolicyARNs:
+        - arn:aws:iam::YOUR_ACCOUNT_ID:policy/insightpilot-app
+
+# Who may use kubectl: the GitHub Actions CI role can deploy into the insightpilot namespace only.
+accessConfig:
+  authenticationMode: API_AND_CONFIG_MAP
+  accessEntries:
+    - principalARN: arn:aws:iam::YOUR_ACCOUNT_ID:role/insightpilot-github-ci
+      accessPolicies:
+        - policyARN: arn:aws:eks::aws:cluster-access-policy/AmazonEKSEditPolicy
+          accessScope:
+            type: namespace
+            namespaces: [insightpilot]
+
+addons:
+  - name: vpc-cni
+  - name: coredns
+  - name: kube-proxy
+  - name: eks-pod-identity-agent
+  - name: aws-ebs-csi-driver # Postgres persistent volume
+    useDefaultPodIdentityAssociations: true
+  - name: metrics-server # needed by the HorizontalPodAutoscaler
+
+managedNodeGroups:
+  - name: spot
+    instanceTypes: [t3.medium, t3a.medium]
+    spot: true # about 70% cheaper; fine for a practice cluster
+    desiredCapacity: 2
+    minSize: 1
+    maxSize: 3
+    volumeSize: 20

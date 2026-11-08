@@ -4,6 +4,7 @@ Every setting can be overridden with an environment variable of the same
 name (case-insensitive), or via a `.env` file in the working directory.
 """
 
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -28,6 +29,8 @@ class Settings(BaseSettings):
     # "bedrock" for real calls, "fake" for offline dev / CI (no AWS needed).
     llm_provider: Literal["bedrock", "fake"] = "fake"
     aws_region: str = "us-east-1"
+    # Optional Bedrock API key (local dev). Leave unset on AWS, where IAM roles are used.
+    aws_bearer_token_bedrock: str | None = Field(default=None, repr=False)
     # Cross-region inference profile. Swap for e.g. us.amazon.nova-pro-v1:0
     # or us.anthropic.claude-3-5-haiku-20241022-v1:0
     bedrock_model_id: str = "us.amazon.nova-lite-v1:0"
@@ -61,4 +64,9 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    # boto3 reads the Bedrock API key only from the process environment, while
+    # pydantic-settings does not export .env values, so bridge it here.
+    if settings.aws_bearer_token_bedrock:
+        os.environ.setdefault("AWS_BEARER_TOKEN_BEDROCK", settings.aws_bearer_token_bedrock)
+    return settings

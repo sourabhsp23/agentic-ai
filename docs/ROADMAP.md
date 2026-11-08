@@ -1,7 +1,9 @@
 # Deployment roadmap
 
 InsightPilot was built so one real application can be taken through every common deployment path. Each stage
-builds on the previous one. Tick them off as you go.
+builds on the previous one. Tick them off as you go. All the configuration already exists in this repo;
+the commands are in **[DEPLOYMENT.md](DEPLOYMENT.md)**. The goal is to run each stage yourself and
+understand every line.
 
 > **Cost discipline:** tear down cloud resources at the end of every session (`terraform destroy`, or delete
 > the stack). The things that bill even when idle are NAT gateways, load balancers, EKS control planes and
@@ -9,7 +11,8 @@ builds on the previous one. Tick them off as you go.
 
 ## Stage 0: Run locally (done)
 - [x] Backend with the offline fake LLM, frontend with the Vite dev server
-- [ ] Switch to real Bedrock (`LLM_PROVIDER=bedrock`), compare Nova Lite and Nova Pro on cost and quality
+- [x] Switch to real Bedrock (`LLM_PROVIDER=bedrock`)
+- [ ] Compare Nova Lite and Nova Pro on cost and answer quality
 
 ## Stage 1: Containers
 - [ ] Install Docker Desktop and understand images, layers, multi-stage builds and non-root users

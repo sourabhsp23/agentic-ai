@@ -20,16 +20,17 @@ ENV PATH="/opt/venv/bin:$PATH" \
     LOG_JSON=true \
     DATA_DIR=/app/sample_data \
     KNOWLEDGE_DIR=/app/knowledge \
-    CACHE_DIR=/tmp/datasets
+    CACHE_DIR=/tmp/datasets \
+    DATABASE_URL=sqlite:////tmp/insightpilot.db
 
 # Run as an unprivileged user (security best practice; required by many K8s policies).
-RUN groupadd --system app && useradd --system --gid app --home /app app
+RUN groupadd --system --gid 10001 app && useradd --system --uid 10001 --gid app --home /app app
 WORKDIR /app
 COPY --from=builder /opt/venv /opt/venv
 COPY --chown=app:app backend/app ./app
 COPY --chown=app:app sample_data ./sample_data
 COPY --chown=app:app knowledge ./knowledge
-USER app
+USER 10001:10001
 
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \

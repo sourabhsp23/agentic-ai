@@ -1,0 +1,11 @@
+# gp3 EBS volumes via the EBS CSI driver (installed as an EKS add-on in infra/eks/cluster.yaml)
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gp3
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp3
+  encrypted: "true"
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete

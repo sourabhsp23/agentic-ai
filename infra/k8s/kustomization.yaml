@@ -1,0 +1,44 @@
+# Deploy:  kubectl apply -k infra/k8s
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: insightpilot
+
+resources:
+  - namespace.yaml
+  - storageclass.yaml
+  - serviceaccount.yaml
+  - postgres.yaml
+  - api.yaml
+  - web.yaml
+  - hpa.yaml
+  - pdb.yaml
+
+configMapGenerator:
+  - name: insightpilot-config
+    literals:
+      - LLM_PROVIDER=bedrock
+      - EMBEDDING_PROVIDER=bedrock
+      - AWS_REGION=us-east-1
+      - BEDROCK_MODEL_ID=us.amazon.nova-lite-v1:0
+      - STORAGE_BACKEND=s3
+      - S3_BUCKET=insightpilot-datasets-YOUR_ACCOUNT_ID
+      - LOG_JSON=true
+
+# Real values live in secrets.env (gitignored). Copy secrets.env.example first.
+secretGenerator:
+  - name: insightpilot-secrets
+    envs:
+      - secrets.env
+
+# Point at your ECR images. CI later pins the exact git-sha tag with `kubectl set image`.
+images:
+  - name: insightpilot-api
+    newName: YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/insightpilot-api
+    newTag: latest
+  - name: insightpilot-web
+    newName: YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/insightpilot-web
+    newTag: latest
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: insightpilot

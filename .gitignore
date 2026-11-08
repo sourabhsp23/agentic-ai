@@ -28,3 +28,6 @@ dist/
 Thumbs.db
 .vscode/
 .idea/
+
+# Kubernetes secrets
+infra/k8s/secrets.env

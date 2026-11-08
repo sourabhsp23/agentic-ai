@@ -1,0 +1,23 @@
+# OPTIONAL (not listed in kustomization.yaml). Requires the AWS Load Balancer Controller:
+#   https://kubernetes-sigs.github.io/aws-load-balancer-controller/
+# Then change the web Service to type ClusterIP and add this file to resources.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/healthcheck-path: /nginx-health
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web
+                port:
+                  number: 80

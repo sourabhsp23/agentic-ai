@@ -65,7 +65,9 @@ instead of free text. Every run is persisted with its SQL, trace, token usage an
 | Frontend | React 18, TypeScript, Vite, Tailwind (token-based design system), Radix UI, TanStack Query, Chart.js |
 | Serving | nginx (static assets + reverse proxy), Uvicorn |
 | Observability | Prometheus metrics, JSON logs |
-| Quality | pytest (30 tests), ruff, `tsc --strict` |
+| Quality | pytest (31 tests), ruff, `tsc --strict` |
+| CI/CD | GitHub Actions: lint, tests, image build, container smoke test, Trivy scan, ECR push via OIDC, deploy |
+| Infrastructure | Terraform (ECR, S3, IAM, EC2, VPC, ALB, ECS Fargate, RDS, Secrets Manager), eksctl + Kustomize for EKS |
 
 ## Quick start (no Docker, no AWS)
 
@@ -91,7 +93,8 @@ The sample `ecommerce` dataset is preloaded: 800 customers, 4.4k orders and 7.7k
 
 1. In the AWS console, open **Bedrock → Model access** in `us-east-1` and make sure **Amazon Nova Lite** and
    **Titan Text Embeddings V2** are available to your account.
-2. Configure credentials locally: `aws configure` (an IAM user with `bedrock:InvokeModel`).
+2. Get credentials: either a **Bedrock API key** (Bedrock console → API keys) or an IAM user with
+   [infra/iam/bedrock-policy.json](infra/iam/bedrock-policy.json) configured via `aws configure`.
 3. Create `backend/.env` from [.env.example](.env.example) and set:
 
    ```env
@@ -99,6 +102,7 @@ The sample `ecommerce` dataset is preloaded: 800 customers, 4.4k orders and 7.7k
    EMBEDDING_PROVIDER=bedrock
    AWS_REGION=us-east-1
    BEDROCK_MODEL_ID=us.amazon.nova-lite-v1:0
+   AWS_BEARER_TOKEN_BEDROCK=...   # only if using an API key
    ```
 
 4. Restart the API. Each answered question makes about 5 model calls. With Nova Lite that's usually a
@@ -162,15 +166,21 @@ frontend/
   Dockerfile       node build -> nginx
 knowledge/         business metric definitions indexed for RAG
 sample_data/       generated e-commerce dataset (backend/scripts/generate_sample_data.py)
+infra/
+  terraform/       shared (ECR, S3, IAM, OIDC) · ec2 · ecs
+  ec2/             production compose file for the VM
+  eks/ k8s/        eksctl cluster config, Kustomize manifests
+  iam/             readable IAM policy JSON
+.github/workflows/ ci.yml · release.yml
 docker-compose.yml
-docs/ROADMAP.md    the deployment learning path
+docs/              DEPLOYMENT.md (how-to), ROADMAP.md (learning checklist)
 ```
 
 ## Testing
 
 ```bash
 cd backend
-pytest              # 30 tests: SQL guard, sandbox, charts, agent loops, API + SSE
+pytest              # 31 tests: SQL guard, sandbox, charts, agent loops, API + SSE
 ruff check .
 cd ../frontend && npm run typecheck
 ```
@@ -178,10 +188,23 @@ cd ../frontend && npm run typecheck
 The graph tests use a scripted LLM to exercise the self-correction loop, the give-up path, the critic's
 revision loop and the conversational short-circuit, all deterministically and without AWS.
 
-## Deployment roadmap
+## Deployment
 
-This repo is also a hands-on path through modern deployment, from a single container to Kubernetes.
-See **[docs/ROADMAP.md](docs/ROADMAP.md)**.
+The same images deploy four ways. Every AWS path runs keyless: IAM roles for the app, GitHub OIDC for CI.
+
+| Target | How | Highlights |
+|---|---|---|
+| Local | `docker compose up` | Postgres + pgvector, health-checked startup |
+| EC2 | [infra/terraform/ec2](infra/terraform/ec2) | Instance profile, IMDSv2, SSM instead of SSH, deploys via SSM Run Command |
+| ECS Fargate | [infra/terraform/ecs](infra/terraform/ecs) | ALB, sidecar task, RDS + Secrets Manager, autoscaling, circuit-breaker rollback |
+| EKS | [infra/eks](infra/eks) + [infra/k8s](infra/k8s) | Pod Identity, HPA, PDB, probes, StatefulSet + EBS, namespace-scoped CI access |
+
+```
+push to main -> CI (ruff, pytest, tsc, docker build, smoke test, Trivy)
+             -> Release (OIDC -> ECR push :sha + :latest -> deploy to DEPLOY_TARGET)
+```
+
+Step-by-step guide: **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** · Learning checklist: **[docs/ROADMAP.md](docs/ROADMAP.md)**
 
 ## License
 

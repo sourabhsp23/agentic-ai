@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: web
+          image: insightpilot-web
+          ports:
+            - containerPort: 80
+          env:
+            - name: API_UPSTREAM
+              value: http://api:8000
+          readinessProbe:
+            httpGet: { path: /nginx-health, port: 80 }
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 50m, memory: 32Mi }
+            limits: { memory: 128Mi }
+---
+# Public entry point. On EKS this provisions an AWS load balancer.
+# Next lesson: replace it with an Ingress + AWS Load Balancer Controller (see ingress-alb.yaml).
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+spec:
+  type: LoadBalancer
+  selector:
+    app: web
+  ports:
+    - port: 80
+      targetPort: 80
